@@ -10,7 +10,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/APTrust/bagins"
+	"github.com/pkalwak/bagins"
 	"strings"
 	"time"
 )

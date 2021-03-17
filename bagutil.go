@@ -19,6 +19,7 @@ import (
 	_ "crypto/sha256"
 	_ "crypto/sha512"
 	"fmt"
+	"github.com/pkalwak/bagins/filesystem"
 	"hash"
 	"io"
 	"os"
@@ -28,7 +29,7 @@ import (
 // Performs a checksum with the hsh.Hash.Sum() method passed to the function
 // and returns the hex value of the resultant string or an error
 func FileChecksum(filepath string, hsh hash.Hash) (string, error) {
-	src, err := FS.Open(filepath)
+	src, err := filesystem.FS.Open(filepath)
 	if err != nil {
 		return "", err
 	}

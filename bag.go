@@ -19,6 +19,7 @@ package bagins
 
 import (
 	"fmt"
+	"github.com/pkalwak/bagins/filesystem"
 	"io"
 	"log"
 	"os"
@@ -63,7 +64,7 @@ func NewBag(location string, name string, hashNames []string, createTagManifests
 
 	// Start with creating the directories.
 	bag.pathToFile = filepath.Join(location, name)
-	err := FS.Mkdir(bag.pathToFile, 0755)
+	err := filesystem.FS.Mkdir(bag.pathToFile, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func NewBag(location string, name string, hashNames []string, createTagManifests
 
 	// Init the payload directory and such.
 	plPath := filepath.Join(bag.Path(), "data")
-	err = FS.Mkdir(plPath, 0755)
+	err = filesystem.FS.Mkdir(plPath, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func (b *Bag) createBagItFile() (*TagFile, error) {
 func ReadBag(pathToFile string, tagfiles []string) (*Bag, error) {
 
 	// validate existence
-	fi, err := FS.Stat(pathToFile)
+	fi, err := filesystem.FS.Stat(pathToFile)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +184,7 @@ func ReadBag(pathToFile string, tagfiles []string) (*Bag, error) {
 		if filepath.Dir(manifestPath) != bag.pathToFile {
 			manifestPath = filepath.Join(bag.pathToFile, manifest.Name())
 		}
-		if _, err := FS.Stat(manifestPath); err != nil {
+		if _, err := filesystem.FS.Stat(manifestPath); err != nil {
 			return nil, fmt.Errorf("Can't find manifest: %v", err)
 		}
 		parsedManifest, errs := ReadManifest(manifestPath)
@@ -303,7 +304,7 @@ func (b *Bag) AddDir(src string) (errs []error) {
 */
 func (b *Bag) AddTagfile(name string) error {
 	tagFilePath := filepath.Join(b.Path(), name)
-	if err := FS.MkdirAll(filepath.Dir(tagFilePath), 0766); err != nil {
+	if err := filesystem.FS.MkdirAll(filepath.Dir(tagFilePath), 0766); err != nil {
 		return err
 	}
 	tf, err := NewTagFile(tagFilePath)
@@ -357,16 +358,16 @@ func (b *Bag) AddCustomTagfile(sourcePath string, destPath string, includeInTagM
 	}
 
 	if absSourcePath != absDestPath {
-		sourceFile, err := FS.Open(absSourcePath)
+		sourceFile, err := filesystem.FS.Open(absSourcePath)
 		if err != nil {
 			return err
 		}
 		defer sourceFile.Close()
 
-		if err = FS.MkdirAll(filepath.Dir(absDestPath), 0766); err != nil {
+		if err = filesystem.FS.MkdirAll(filepath.Dir(absDestPath), 0766); err != nil {
 			return err
 		}
-		destFile, err := FS.Create(absDestPath)
+		destFile, err := filesystem.FS.Create(absDestPath)
 		if err != nil {
 			return err
 		}
@@ -449,7 +450,7 @@ func (b *Bag) UnparsedTagFiles() ([]string, error) {
 		return err
 	}
 
-	if err := FS.Walk(b.Path(), visit); err != nil {
+	if err := filesystem.FS.Walk(b.Path(), visit); err != nil {
 		return nil, err
 	}
 
@@ -550,7 +551,7 @@ func (b *Bag) savePayloadManifests() (errs []error) {
 func (b *Bag) calculateChecksumsForManagedTagFiles() (errs []error) {
 	tagManifests := b.GetManifests(TagManifest)
 	for _, tf := range b.tagfiles {
-		if err := FS.MkdirAll(filepath.Dir(tf.Name()), 0766); err != nil {
+		if err := filesystem.FS.MkdirAll(filepath.Dir(tf.Name()), 0766); err != nil {
 			errs = append(errs, err)
 		}
 		if err := tf.Create(); err != nil {
@@ -649,7 +650,7 @@ func (b *Bag) ListFiles() ([]string, error) {
 		return err
 	}
 
-	if err := FS.Walk(b.Path(), visit); err != nil {
+	if err := filesystem.FS.Walk(b.Path(), visit); err != nil {
 		return nil, err
 	}
 

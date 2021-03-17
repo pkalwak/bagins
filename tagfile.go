@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/pkalwak/bagins/filesystem"
 	"github.com/spf13/afero"
 	"path/filepath"
 	"regexp"
@@ -132,7 +133,7 @@ func NewTagFile(name string) (tf *TagFile, err error) {
 func ReadTagFile(name string) (*TagFile, []error) {
 	var errs []error
 
-	file, err := FS.Open(name)
+	file, err := filesystem.FS.Open(name)
 	if err != nil {
 		return nil, append(errs, err)
 	}
@@ -161,12 +162,12 @@ func (tf *TagFile) Name() string {
 func (tf *TagFile) Create() error {
 
 	// Create directory if needed.
-	if err := FS.MkdirAll(filepath.Dir(tf.name), 0777); err != nil {
+	if err := filesystem.FS.MkdirAll(filepath.Dir(tf.name), 0777); err != nil {
 		return err
 	}
 
 	// Create the tagfile.
-	fileOut, err := FS.Create(tf.Name())
+	fileOut, err := filesystem.FS.Create(tf.Name())
 	if err != nil {
 		return err
 	}
@@ -239,7 +240,7 @@ func formatField(key string, data string) (string, error) {
 // Some private convenence methods for manipulating tag files.
 func validateTagFileName(name string) (err error) {
 
-	_, err = FS.Stat(filepath.Dir(name))
+	_, err = filesystem.FS.Stat(filepath.Dir(name))
 	re, _ := regexp.Compile(`.*\.txt`)
 	if !re.MatchString(filepath.Base(name)) {
 		err = errors.New(fmt.Sprint("Tagfiles must end in .txt and contain at least 1 letter.  Provided: ", filepath.Base(name)))

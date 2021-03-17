@@ -24,4 +24,5 @@ _testmain.go
 # IDE directories
 .idea
 .project
+bagins.iml
 *.sublime-*

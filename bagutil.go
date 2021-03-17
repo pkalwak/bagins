@@ -2,7 +2,7 @@
 Package contains various utility methods to work with bagit bags.
 
 */
-package bagutil
+package bagins
 
 /*
 
@@ -28,7 +28,7 @@ import (
 // Performs a checksum with the hsh.Hash.Sum() method passed to the function
 // and returns the hex value of the resultant string or an error
 func FileChecksum(filepath string, hsh hash.Hash) (string, error) {
-	src, err := os.Open(filepath)
+	src, err := FS.Open(filepath)
 	if err != nil {
 		return "", err
 	}
@@ -64,8 +64,8 @@ func LookupHash(algo string) (func() hash.Hash, error) {
 	case "sha384":
 		return crypto.SHA384.New, nil
 	}
-	return nil, fmt.Errorf("Invalid hash name %s: " +
-		"Must be one of md5, sha1, sha256, sha512, sha224, sha284. " +
+	return nil, fmt.Errorf("Invalid hash name %s: "+
+		"Must be one of md5, sha1, sha256, sha512, sha224, sha284. "+
 		"Do you have a manifest-%s.txt file somewhere in your bag?",
 		algo, algo)
 }

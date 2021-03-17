@@ -169,9 +169,9 @@ func TestNewTagFile(t *testing.T) {
 func TestReadTagFile(t *testing.T) {
 	// Expected Data
 	exp_list := [][]string{
-		[]string{"description", strings.Repeat("test ", 40)},
-		[]string{"title", "This is my title"},
-		[]string{"description", strings.Repeat("more ", 80)},
+		{"description", strings.Repeat("test ", 40)},
+		{"title", "This is my title"},
+		{"description", strings.Repeat("more ", 80)},
 	}
 
 	// Prep the test file
@@ -229,7 +229,6 @@ func TestTagFileToString(t *testing.T) {
 	tagFile.Data.AddField(*bagins.NewTagField("BagIt-Version", "0.97"))
 	tagFile.Data.AddField(*bagins.NewTagField("Tag-File-Character-Encoding", "UTF-8"))
 	tagFile.Data.AddField(*bagins.NewTagField("Long-Line", "A metadata element MUST consist of a label, a colon, and a value, each separated by optional whitespace.  It is RECOMMENDED that lines not exceed 79 characters in length.  Long values may be continued onto the next line by inserting a newline (LF), a carriage return (CR), or carriage return plus newline (CRLF) and indenting the next line with linear white space (spaces or tabs)."))
-
 
 	str, err := tagFile.ToString()
 	if err != nil {

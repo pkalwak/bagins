@@ -13,7 +13,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
+	"github.com/spf13/afero"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -117,6 +117,7 @@ type TagFile struct {
  The name argument represents the filepath of the tagfile, which must end in txt
 */
 func NewTagFile(name string) (tf *TagFile, err error) {
+
 	err = validateTagFileName(name)
 	tf = new(TagFile)
 	tf.name = filepath.Clean(name)
@@ -131,7 +132,7 @@ func NewTagFile(name string) (tf *TagFile, err error) {
 func ReadTagFile(name string) (*TagFile, []error) {
 	var errs []error
 
-	file, err := os.Open(name)
+	file, err := FS.Open(name)
 	if err != nil {
 		return nil, append(errs, err)
 	}
@@ -158,13 +159,14 @@ func (tf *TagFile) Name() string {
  formatting as indicated in the BagIt spec.
 */
 func (tf *TagFile) Create() error {
+
 	// Create directory if needed.
-	if err := os.MkdirAll(filepath.Dir(tf.name), 0777); err != nil {
+	if err := FS.MkdirAll(filepath.Dir(tf.name), 0777); err != nil {
 		return err
 	}
 
 	// Create the tagfile.
-	fileOut, err := os.Create(tf.Name())
+	fileOut, err := FS.Create(tf.Name())
 	if err != nil {
 		return err
 	}
@@ -198,7 +200,6 @@ func (tf *TagFile) ToString() (string, error) {
 	}
 	return str, nil
 }
-
 
 /*
 Takes a tag field key and data and wraps lines at 79 with indented spaces as
@@ -237,7 +238,8 @@ func formatField(key string, data string) (string, error) {
 
 // Some private convenence methods for manipulating tag files.
 func validateTagFileName(name string) (err error) {
-	_, err = os.Stat(filepath.Dir(name))
+
+	_, err = FS.Stat(filepath.Dir(name))
 	re, _ := regexp.Compile(`.*\.txt`)
 	if !re.MatchString(filepath.Base(name)) {
 		err = errors.New(fmt.Sprint("Tagfiles must end in .txt and contain at least 1 letter.  Provided: ", filepath.Base(name)))
@@ -249,7 +251,7 @@ func validateTagFileName(name string) (err error) {
  Reads the contents of file and parses tagfile fields from the contents or returns an error if
  it contains unparsable data.
 */
-func parseTagFields(file *os.File) ([]TagField, []error) {
+func parseTagFields(file afero.File) ([]TagField, []error) {
 	var errors []error
 	re, err := regexp.Compile(`^(\S*\:)?(\s.*)?$`)
 	if err != nil {

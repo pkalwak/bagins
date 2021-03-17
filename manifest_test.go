@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-var test_list map[string]string = map[string]string{
+var test_list = map[string]string{
 	"md5":    "9e107d9d372bb6826bd81d3542a419d6",
 	"sha1":   "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12",
 	"sha256": "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592",
@@ -20,7 +20,7 @@ var test_list map[string]string = map[string]string{
 	"sha224": "730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525",
 	"sha384": "ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1",
 }
-var test_string string = "The quick brown fox jumps over the lazy dog"
+var test_string = "The quick brown fox jumps over the lazy dog"
 
 func TestNewManifest(t *testing.T) {
 	pth, _ := ioutil.TempDir("", "_GOTEST_MANIFEST")
@@ -72,7 +72,6 @@ func TestManifestType(t *testing.T) {
 	}
 
 }
-
 
 func TestReadManifest(t *testing.T) {
 
@@ -191,7 +190,7 @@ func TestManifestToString(t *testing.T) {
 	m.Data["FileThree.txt"] = fmt.Sprintf("CHECKSUM 0003")
 
 	output := m.ToString()
-	lines := []string {
+	lines := []string{
 		"CHECKSUM 0001 FileOne.txt\n",
 		"CHECKSUM 0002 FileTwo.txt\n",
 		"CHECKSUM 0003 FileThree.txt\n",

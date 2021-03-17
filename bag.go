@@ -18,7 +18,6 @@ package bagins
 */
 
 import (
-	"github.com/APTrust/bagins/bagutil"
 	"fmt"
 	"io"
 	"log"
@@ -64,7 +63,7 @@ func NewBag(location string, name string, hashNames []string, createTagManifests
 
 	// Start with creating the directories.
 	bag.pathToFile = filepath.Join(location, name)
-	err := os.Mkdir(bag.pathToFile, 0755)
+	err := FS.Mkdir(bag.pathToFile, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +91,7 @@ func NewBag(location string, name string, hashNames []string, createTagManifests
 
 	// Init the payload directory and such.
 	plPath := filepath.Join(bag.Path(), "data")
-	err = os.Mkdir(plPath, 0755)
+	err = FS.Mkdir(plPath, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -143,8 +142,9 @@ func (b *Bag) createBagItFile() (*TagFile, error) {
 	contents into payload, manifests and tagfiles.
 */
 func ReadBag(pathToFile string, tagfiles []string) (*Bag, error) {
+
 	// validate existence
-	fi, err := os.Stat(pathToFile)
+	fi, err := FS.Stat(pathToFile)
 	if err != nil {
 		return nil, err
 	}
@@ -183,13 +183,13 @@ func ReadBag(pathToFile string, tagfiles []string) (*Bag, error) {
 		if filepath.Dir(manifestPath) != bag.pathToFile {
 			manifestPath = filepath.Join(bag.pathToFile, manifest.Name())
 		}
-		if _, err := os.Stat(manifestPath); err != nil {
+		if _, err := FS.Stat(manifestPath); err != nil {
 			return nil, fmt.Errorf("Can't find manifest: %v", err)
 		}
 		parsedManifest, errs := ReadManifest(manifestPath)
 		if errs != nil && len(errs) > 0 {
 			errors := ""
-			for _, e := range(errs) {
+			for _, e := range errs {
 				errors = fmt.Sprintf("%s; %s", errors, e.Error())
 			}
 			return nil, fmt.Errorf("Unable to parse manifest %s: %s", manifestPath, errors)
@@ -199,19 +199,19 @@ func ReadBag(pathToFile string, tagfiles []string) (*Bag, error) {
 	}
 
 	/*
-       Note that we are parsing tags from the expected tag files, and
-       not parsing tags from unexpected tag files. This is per the BagIt
-       spec for V0.97, section 2.2.4, as described here:
+		       Note that we are parsing tags from the expected tag files, and
+		       not parsing tags from unexpected tag files. This is per the BagIt
+		       spec for V0.97, section 2.2.4, as described here:
 
-       http://tools.ietf.org/html/draft-kunze-bagit-13#section-2.2.4
+		       http://tools.ietf.org/html/draft-kunze-bagit-13#section-2.2.4
 
-       A bag MAY contain other tag files that are not defined by this
-       specification.  Implementations SHOULD ignore the content of any
-	   unexpected tag files, except when they are listed in a tag manifest.
-       When unexpected tag files are listed in a tag manifest,
-       implementations MUST only treat the content of those tag files as
-       octet streams for the purpose of checksum verification.
-    */
+		       A bag MAY contain other tag files that are not defined by this
+		       specification.  Implementations SHOULD ignore the content of any
+			   unexpected tag files, except when they are listed in a tag manifest.
+		       When unexpected tag files are listed in a tag manifest,
+		       implementations MUST only treat the content of those tag files as
+		       octet streams for the purpose of checksum verification.
+	*/
 	for _, tName := range tagfiles {
 		tf, errs := ReadTagFile(filepath.Join(bag.pathToFile, tName))
 		// Warn on Stderr only if we're running as bagmaker
@@ -228,7 +228,7 @@ func ReadBag(pathToFile string, tagfiles []string) (*Bag, error) {
 
 // Finds all payload and tag manifests in an existing bag.
 // This is used by ReadBag, not when creating a bag.
-func (b *Bag) findManifests() ([]error){
+func (b *Bag) findManifests() []error {
 	if b.Manifests == nil {
 		b.Manifests = make([]*Manifest, 0)
 	}
@@ -303,7 +303,7 @@ func (b *Bag) AddDir(src string) (errs []error) {
 */
 func (b *Bag) AddTagfile(name string) error {
 	tagFilePath := filepath.Join(b.Path(), name)
-	if err := os.MkdirAll(filepath.Dir(tagFilePath), 0766); err != nil {
+	if err := FS.MkdirAll(filepath.Dir(tagFilePath), 0766); err != nil {
 		return err
 	}
 	tf, err := NewTagFile(tagFilePath)
@@ -341,9 +341,9 @@ func (b *Bag) AddTagfile(name string) error {
  with the appropriate checksums.
 */
 func (b *Bag) AddCustomTagfile(sourcePath string, destPath string, includeInTagManifests bool) error {
-	if (strings.HasPrefix(destPath, "/data") ||
-		strings.HasPrefix(destPath, "/") || strings.Contains(destPath, "..")) {
-		return fmt.Errorf("Illegal value '%s' for param destPath. " +
+	if strings.HasPrefix(destPath, "/data") ||
+		strings.HasPrefix(destPath, "/") || strings.Contains(destPath, "..") {
+		return fmt.Errorf("Illegal value '%s' for param destPath. "+
 			"File name cannot start with '/' or '/data' or contain '..'", destPath)
 	}
 
@@ -357,16 +357,16 @@ func (b *Bag) AddCustomTagfile(sourcePath string, destPath string, includeInTagM
 	}
 
 	if absSourcePath != absDestPath {
-		sourceFile, err := os.Open(absSourcePath)
+		sourceFile, err := FS.Open(absSourcePath)
 		if err != nil {
 			return err
 		}
 		defer sourceFile.Close()
 
-		if err = os.MkdirAll(filepath.Dir(absDestPath), 0766); err != nil {
+		if err = FS.MkdirAll(filepath.Dir(absDestPath), 0766); err != nil {
 			return err
 		}
-		destFile, err := os.Create(absDestPath)
+		destFile, err := FS.Create(absDestPath)
 		if err != nil {
 			return err
 		}
@@ -412,7 +412,7 @@ func (b *Bag) TagFile(name string) (*TagFile, error) {
 func (b *Bag) ListTagFiles() []string {
 	names := make([]string, len(b.tagfiles))
 	i := 0
-	for k, _ := range b.tagfiles {
+	for k := range b.tagfiles {
 		names[i] = k
 		i++
 	}
@@ -437,8 +437,8 @@ func (b *Bag) UnparsedTagFiles() ([]string, error) {
 		}
 
 		isPayload := strings.HasPrefix(pathToFile, b.payload.Name())
-		isManifest := (strings.HasPrefix(relativePath, "tagmanifest-") ||
-			strings.HasPrefix(relativePath, "manifest-"))
+		isManifest := strings.HasPrefix(relativePath, "tagmanifest-") ||
+			strings.HasPrefix(relativePath, "manifest-")
 		_, isParsedTagFile := b.tagfiles[relativePath]
 
 		if !info.IsDir() && !isPayload && !isParsedTagFile && !isManifest {
@@ -449,13 +449,12 @@ func (b *Bag) UnparsedTagFiles() ([]string, error) {
 		return err
 	}
 
-	if err := filepath.Walk(b.Path(), visit); err != nil {
+	if err := FS.Walk(b.Path(), visit); err != nil {
 		return nil, err
 	}
 
 	return files, nil
 }
-
 
 /*
  Convienence method to return the bag-info.txt tag file if it exists.  Since
@@ -470,13 +469,12 @@ func (b *Bag) BagInfo() (*TagFile, error) {
 	return tf, nil
 }
 
-
 // Returns the manifest with the specified algorithm and type,
 // or nil. For example, GetManifest(PayloadManifest, "sha256")
 // returns either a reference to manifest-sha256.txt or nil.
 // GetManifest(TagManifest, "md5") returns a reference to
 // tagmanifest-md5.txt or nil.
-func (b *Bag) GetManifest(manifestType, algorithm string) (*Manifest) {
+func (b *Bag) GetManifest(manifestType, algorithm string) *Manifest {
 	for _, m := range b.Manifests {
 		if m.Type() == manifestType && m.Algorithm() == algorithm {
 			return m
@@ -488,7 +486,7 @@ func (b *Bag) GetManifest(manifestType, algorithm string) (*Manifest) {
 // Returns the manifests of the specified type,
 // or an empty slice. For example, GetManifests(PayloadManifest)
 // returns all of the payload manifests.
-func (b *Bag) GetManifests(manifestType string) ([]*Manifest) {
+func (b *Bag) GetManifests(manifestType string) []*Manifest {
 	manifests := make([]*Manifest, 0)
 	for _, m := range b.Manifests {
 		if m.Type() == manifestType {
@@ -552,7 +550,7 @@ func (b *Bag) savePayloadManifests() (errs []error) {
 func (b *Bag) calculateChecksumsForManagedTagFiles() (errs []error) {
 	tagManifests := b.GetManifests(TagManifest)
 	for _, tf := range b.tagfiles {
-		if err := os.MkdirAll(filepath.Dir(tf.Name()), 0766); err != nil {
+		if err := FS.MkdirAll(filepath.Dir(tf.Name()), 0766); err != nil {
 			errs = append(errs, err)
 		}
 		if err := tf.Create(); err != nil {
@@ -561,15 +559,15 @@ func (b *Bag) calculateChecksumsForManagedTagFiles() (errs []error) {
 		// Add tag file checksums to tag manifests
 		for i := range tagManifests {
 			manifest := tagManifests[i]
-			checksum, err := bagutil.FileChecksum(tf.Name(), manifest.hashFunc())
+			checksum, err := FileChecksum(tf.Name(), manifest.hashFunc())
 			if err != nil {
-				errors := []error {
+				errors := []error{
 					fmt.Errorf("Error calculating %s checksum for file %s: %v",
 						manifest.Algorithm(), tf.Name(), err),
 				}
 				return errors
 			}
-			relativeFilePath := strings.Replace(tf.Name(), b.pathToFile + "/", "", 1)
+			relativeFilePath := strings.Replace(tf.Name(), b.pathToFile+"/", "", 1)
 			manifest.Data[relativeFilePath] = checksum
 		}
 	}
@@ -588,7 +586,7 @@ func (b *Bag) calculateChecksumsForCustomTagFiles() (errs []error) {
 		nonPayloadFiles = append(nonPayloadFiles, m.Name())
 	}
 	for _, file := range nonPayloadFiles {
-		relativeFilePath := strings.Replace(file, b.pathToFile + "/", "", 1)
+		relativeFilePath := strings.Replace(file, b.pathToFile+"/", "", 1)
 		if _, exclude := b.excludeFromTagManifests[relativeFilePath]; exclude {
 			continue
 		}
@@ -599,9 +597,9 @@ func (b *Bag) calculateChecksumsForCustomTagFiles() (errs []error) {
 		}
 		for i := range tagManifests {
 			manifest := tagManifests[i]
-			checksum, err := bagutil.FileChecksum(absPathToFile, manifest.hashFunc())
+			checksum, err := FileChecksum(absPathToFile, manifest.hashFunc())
 			if err != nil {
-				errors := []error {
+				errors := []error{
 					fmt.Errorf("Error calculating %s checksum for file %s: %v",
 						manifest.Algorithm(), file, err),
 				}
@@ -651,7 +649,7 @@ func (b *Bag) ListFiles() ([]string, error) {
 		return err
 	}
 
-	if err := filepath.Walk(b.Path(), visit); err != nil {
+	if err := FS.Walk(b.Path(), visit); err != nil {
 		return nil, err
 	}
 

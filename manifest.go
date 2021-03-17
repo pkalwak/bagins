@@ -12,7 +12,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/APTrust/bagins/bagutil"
+	"github.com/spf13/afero"
 	"hash"
 	"os"
 	"path"
@@ -30,11 +30,11 @@ import (
    tagmanifest: http://tools.ietf.org/html/draft-kunze-bagit-09#section-2.2.1
 */
 type Manifest struct {
-	name          string            // Path to the manifest file
-	manifestType  string            // payload manifest or tag manifest?
-	Data          map[string]string // Key is file path, value is checksum
-	hashName      string
-	hashFunc      func() hash.Hash
+	name         string            // Path to the manifest file
+	manifestType string            // payload manifest or tag manifest?
+	Data         map[string]string // Key is file path, value is checksum
+	hashName     string
+	hashFunc     func() hash.Hash
 }
 
 const (
@@ -44,11 +44,12 @@ const (
 
 // Returns a pointer to a new manifest or returns an error if improperly named.
 func NewManifest(pathToFile string, hashName string, manifestType string) (*Manifest, error) {
+
 	if manifestType != PayloadManifest && manifestType != TagManifest {
 		return nil, fmt.Errorf("Param manifestType must be either bagins.PayloadManifest " +
 			"or bagins.TagManifest")
 	}
-	if _, err := os.Stat(filepath.Dir(pathToFile)); err != nil {
+	if _, err := FS.Stat(filepath.Dir(pathToFile)); err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("Unable to create manifest. Path does not exist: %s", pathToFile)
 		} else {
@@ -57,7 +58,7 @@ func NewManifest(pathToFile string, hashName string, manifestType string) (*Mani
 	}
 	m := new(Manifest)
 	m.hashName = strings.ToLower(hashName)
-	hashFunc, err := bagutil.LookupHash(hashName)
+	hashFunc, err := LookupHash(hashName)
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +66,11 @@ func NewManifest(pathToFile string, hashName string, manifestType string) (*Mani
 	m.Data = make(map[string]string)
 
 	// Older versions allow pathToFile to be empty...
-	if !strings.HasSuffix(pathToFile, "manifest-" + hashName + ".txt") {
+	if !strings.HasSuffix(pathToFile, "manifest-"+hashName+".txt") {
 		if manifestType == PayloadManifest {
-			pathToFile = filepath.Join(pathToFile, "manifest-" + m.hashName +".txt")
+			pathToFile = filepath.Join(pathToFile, "manifest-"+m.hashName+".txt")
 		} else {
-			pathToFile = filepath.Join(pathToFile, "tagmanifest-" + m.hashName + ".txt")
+			pathToFile = filepath.Join(pathToFile, "tagmanifest-"+m.hashName+".txt")
 		}
 	}
 
@@ -95,7 +96,7 @@ func ReadManifest(name string) (*Manifest, []error) {
 		return nil, append(errs, err)
 	}
 
-	file, err := os.Open(name)
+	file, err := FS.Open(name)
 	if err != nil {
 		return nil, append(errs, err)
 	}
@@ -124,11 +125,12 @@ func ReadManifest(name string) (*Manifest, []error) {
   stored in manifest file.  Returns an error for each file that fails the fixity check.
 */
 func (m *Manifest) RunChecksums() []error {
+
 	var invalidSums []error
 
 	for key, sum := range m.Data {
 		pathToFile := filepath.Join(filepath.Dir(m.name), key)
-		fileChecksum, err := bagutil.FileChecksum(pathToFile, m.hashFunc())
+		fileChecksum, err := FileChecksum(pathToFile, m.hashFunc())
 		if sum != fileChecksum {
 			invalidSums = append(invalidSums, fmt.Errorf("File checksum %s is not valid for %s:%s", sum, key, fileChecksum))
 		}
@@ -148,12 +150,12 @@ func (m *Manifest) Create() error {
 	// Create directory if needed.
 	basepath := filepath.Dir(m.name)
 
-	if err := os.MkdirAll(basepath, 0777); err != nil {
+	if err := FS.MkdirAll(basepath, 0777); err != nil {
 		return err
 	}
 
 	// Create the tagfile.
-	fileOut, err := os.Create(m.name)
+	fileOut, err := FS.Create(m.name)
 	if err != nil {
 		return err
 	}
@@ -178,7 +180,6 @@ func (m *Manifest) ToString() string {
 	}
 	return str
 }
-
 
 // Returns a sting of the filename for this manifest file based on Path, BaseName and Algo
 func (m *Manifest) Name() string {
@@ -214,7 +215,7 @@ func parseAlgoName(name string) (string, error) {
 
 // Reads the contents of file and parses checksum and file information in manifest format as
 // per the bagit specification.
-func parseManifestData(file *os.File) (map[string]string, []error) {
+func parseManifestData(file afero.File) (map[string]string, []error) {
 	var errs []error
 	// See regexp examples at http://play.golang.org/p/_msLJ-lBEu
 	// Regex matches these reqs from the bagit spec: "One or

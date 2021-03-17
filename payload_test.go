@@ -3,7 +3,6 @@ package bagins_test
 import (
 	"crypto/md5"
 	"github.com/APTrust/bagins"
-	"github.com/APTrust/bagins/bagutil"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -106,7 +105,6 @@ func TestPayloadAddInPlace(t *testing.T) {
 	}
 }
 
-
 func TestPayloadAddAll(t *testing.T) {
 	// Setup directories to test on
 	srcDir, _ := ioutil.TempDir("", "_GOTEST_PayloadAddAll_SRCDIR_")
@@ -136,7 +134,7 @@ func TestPayloadAddAll(t *testing.T) {
 	}
 
 	for key := range checksums {
-		fileChk, err := bagutil.FileChecksum(filepath.Join(p.Name(), key), md5.New())
+		fileChk, err := bagins.FileChecksum(filepath.Join(p.Name(), key), md5.New())
 		if err != nil {
 			t.Errorf(" %s", err)
 		}
@@ -198,7 +196,7 @@ func BenchmarkPayload(b *testing.B) {
 
 	// Make sure the actual values check out.
 	for key := range checksums {
-		fileChk, err := bagutil.FileChecksum(filepath.Join(p.Name(), key), md5.New())
+		fileChk, err := bagins.FileChecksum(filepath.Join(p.Name(), key), md5.New())
 		if err != nil {
 			b.Errorf(" %s", err)
 		}

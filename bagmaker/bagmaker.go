@@ -121,7 +121,7 @@ func main() {
 
 func parseAlgorithms(algo string) (algorithms []string) {
 	if algo == "" {
-		algorithms = []string { "md5" }
+		algorithms = []string{"md5"}
 	} else {
 		algorithms = strings.Split(algo, ",")
 	}

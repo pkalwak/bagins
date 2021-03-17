@@ -12,7 +12,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/pkalwak/bagins/filesystem"
 	"github.com/spf13/afero"
 	"hash"
 	"os"
@@ -50,7 +49,7 @@ func NewManifest(pathToFile string, hashName string, manifestType string) (*Mani
 		return nil, fmt.Errorf("Param manifestType must be either bagins.PayloadManifest " +
 			"or bagins.TagManifest")
 	}
-	if _, err := filesystem.FS.Stat(filepath.Dir(pathToFile)); err != nil {
+	if _, err := FS.Stat(filepath.Dir(pathToFile)); err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("Unable to create manifest. Path does not exist: %s", pathToFile)
 		} else {
@@ -97,7 +96,7 @@ func ReadManifest(name string) (*Manifest, []error) {
 		return nil, append(errs, err)
 	}
 
-	file, err := filesystem.FS.Open(name)
+	file, err := FS.Open(name)
 	if err != nil {
 		return nil, append(errs, err)
 	}
@@ -151,12 +150,12 @@ func (m *Manifest) Create() error {
 	// Create directory if needed.
 	basepath := filepath.Dir(m.name)
 
-	if err := filesystem.FS.MkdirAll(basepath, 0777); err != nil {
+	if err := FS.MkdirAll(basepath, 0777); err != nil {
 		return err
 	}
 
 	// Create the tagfile.
-	fileOut, err := filesystem.FS.Create(m.name)
+	fileOut, err := FS.Create(m.name)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,6 @@ package bagins
 
 import (
 	"fmt"
-	"github.com/pkalwak/bagins/filesystem"
 	"hash"
 	"io"
 	"os"
@@ -27,7 +26,7 @@ type Payload struct {
 // Returns a new Payload struct managing the path provied.
 func NewPayload(location string) (*Payload, error) {
 
-	if _, err := filesystem.FS.Stat(filepath.Clean(location)); os.IsNotExist(err) {
+	if _, err := FS.Stat(filepath.Clean(location)); os.IsNotExist(err) {
 		return nil, fmt.Errorf("Payload directory does not exist! Returned: %v", err)
 	}
 	p := new(Payload)
@@ -58,7 +57,7 @@ func (p *Payload) Name() string {
 // checksums["sha256"] = "0b0b0b0b"
 func (p *Payload) Add(srcPath string, dstPath string, manifests []*Manifest) (map[string]string, error) {
 
-	src, err := filesystem.FS.Open(srcPath)
+	src, err := FS.Open(srcPath)
 	if err != nil {
 		return nil, err
 	}
@@ -98,10 +97,10 @@ func (p *Payload) Add(srcPath string, dstPath string, manifests []*Manifest) (ma
 	} else {
 		// TODO simplify this! returns on windows paths are messing with me so I'm
 		// going through this step wise.
-		if err := filesystem.FS.MkdirAll(filepath.Dir(dstFile), 0766); err != nil {
+		if err := FS.MkdirAll(filepath.Dir(dstFile), 0766); err != nil {
 			return nil, err
 		}
-		dst, err := filesystem.FS.Create(dstFile)
+		dst, err := FS.Create(dstFile)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +163,7 @@ func (p *Payload) AddAll(src string, manifests []*Manifest) (checksums map[strin
 		return err
 	}
 
-	if err := filesystem.FS.Walk(src, visit); err != nil {
+	if err := FS.Walk(src, visit); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -195,7 +194,7 @@ func (p *Payload) OctetStreamSum() (int64, int) {
 		return err
 	}
 
-	filesystem.FS.Walk(p.dir, visit)
+	FS.Walk(p.dir, visit)
 
 	return sum, count
 }

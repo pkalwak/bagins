@@ -1,4 +1,4 @@
-package filesystem
+package bagins
 
 import "github.com/spf13/afero"
 

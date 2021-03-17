@@ -2,7 +2,7 @@
 package bagutil
 
 import (
-	"github.com/APTrust/bagins"
+	"github.com/pkalwak/bagins"
 	"io/ioutil"
 	"os"
 	"testing"

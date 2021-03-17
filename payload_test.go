@@ -2,7 +2,7 @@ package bagins_test
 
 import (
 	"crypto/md5"
-	"github.com/APTrust/bagins"
+	"github.com/pkalwak/bagins"
 	"io/ioutil"
 	"os"
 	"path/filepath"

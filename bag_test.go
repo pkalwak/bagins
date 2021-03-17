@@ -2,7 +2,7 @@ package bagins_test
 
 import (
 	//	"fmt"
-	"github.com/APTrust/bagins"
+	"github.com/pkalwak/bagins"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -816,7 +816,7 @@ func TestListFiles(t *testing.T) {
 	defer os.RemoveAll(bag.Path())
 
 	// Setup the test file to add for the test.
-	fi, _ := os.Create((filepath.Join(bag.Path(), "data", "TEST_GO_DATAFILE.txt")))
+	fi, _ := os.Create(filepath.Join(bag.Path(), "data", "TEST_GO_DATAFILE.txt"))
 	fi.WriteString("Test the checksum")
 	fi.Close()
 

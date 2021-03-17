@@ -3,7 +3,7 @@ package bagins_test
 
 import (
 	"fmt"
-	"github.com/APTrust/bagins"
+	"github.com/pkalwak/bagins"
 	"io/ioutil"
 	"math/rand"
 	"os"
